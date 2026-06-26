@@ -29,6 +29,18 @@ app.add_middleware(
 # Global configuration
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 WEIGHTS_PATH = os.path.join("models", "generator.pth")
+import urllib.request
+
+MODEL_URL = "https://huggingface.co/geet-2406/aetheris/resolve/main/generator.pth"
+
+if not os.path.exists(WEIGHTS_PATH):
+    os.makedirs(os.path.dirname(WEIGHTS_PATH), exist_ok=True)
+    print(f"Downloading model weights from {MODEL_URL}...")
+    try:
+        urllib.request.urlretrieve(MODEL_URL, WEIGHTS_PATH)
+        print("Model weights downloaded successfully.")
+    except Exception as e:
+        print(f"Failed to download model weights: {e}")
 SAMPLES_DIR = os.path.join("samples")
 os.makedirs(SAMPLES_DIR, exist_ok=True)
 
