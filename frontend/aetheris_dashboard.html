@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>AETHERIS — Satellite Suite v1.0</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg-main: #0a0e14;
+    --card-bg: rgba(255,255,255,0.04);
+    --accent-cyan: #00d5ff;
+    --accent-blue: #0066ff;
+    --text-light: #e0e5eb;
+    --text-muted: #a0a8b2;
+    --green-dot: #00ff7f;
+    --border-radius: 10px;
+    --shadow: 0 2px 6px rgba(0,0,0,0.4);
+  }
+  * {box-sizing:border-box;margin:0;padding:0;}
+  body {font-family:'Inter',sans-serif;background:var(--bg-main);color:var(--text-light);overflow:hidden;}
+  .container {display:grid;grid-template-columns:220px 1fr 260px;height:100vh;}
+  .sidebar,.rightbar{padding:1rem;overflow-y:auto;}
+  .sidebar{background:var(--bg-main);} .rightbar{background:var(--bg-main);}
+  .card{background:var(--card-bg);border-radius:var(--border-radius);padding:1rem;margin-bottom:1rem;box-shadow:var(--shadow);backdrop-filter:blur(8px);}
+  .logo{font-size:1.2rem;font-weight:600;margin-bottom:0.5rem;color:var(--accent-cyan);} 
+  .status-dot{width:12px;height:12px;border-radius:50%;background:var(--green-dot);display:inline-block;margin-right:4px;}
+  .pill{padding:0.3rem 0.8rem;border-radius:12px;background:var(--card-bg);color:var(--text-muted);cursor:pointer;margin-right:4px;}
+  .pill.active{background:var(--accent-blue);color:#fff;}
+  .header{display:flex;align-items:center;justify-content:space-between;padding:0.5rem 0;border-bottom:1px solid rgba(255,255,255,0.08);}
+  .header .dot{width:10px;height:10px;border-radius:50%;background:var(--green-dot);margin-right:6px;}
+  .compare{position:relative;width:100%;height:600px;margin-top:1rem;}
+  .compare img{width:100%;height:100%;object-fit:cover;}
+  .slider{position:absolute;left:50%;top:0;bottom:0;width:4px;background:var(--accent-blue);cursor:col-resize;}
+  .slider::before{content:'⇆';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:1rem;}
+  .bottom-panel{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;padding:1rem;background:var(--bg-main);}
+  .stat-card{background:var(--card-bg);padding:0.8rem;border-radius:var(--border-radius);text-align:center;}
+  .stat-number{font-size:1.5rem;font-weight:600;color:var(--accent-cyan);}
+  .footer{position:fixed;bottom:0;left:0;right:0;background:var(--bg-main);color:var(--text-muted);font-size:0.85rem;padding:0.3rem 1rem;display:flex;justify-content:space-between;align-items:center;}
+  .footer .icons span{margin-left:0.5rem;cursor:pointer;}
+  .bbox{position:absolute;border:2px solid;pointer-events:none;font-size:0.75rem;font-weight:600;padding:2px 4px;background:rgba(0,0,0,0.4);color:#fff;}
+  .bbox.building{border-color:#00d5ff;background:rgba(0,213,255,0.2);}
+  .bbox.vehicle{border-color:#ff8800;background:rgba(255,136,0,0.2);}
+</style>
+</head>
+<body>
+<div class="container">
+  <!-- Left Sidebar -->
+  <aside class="sidebar">
+    <div class="logo">SATELLITE SUITE V1.0</div>
+    <div class="card">
+      <div><span class="status-dot"></span><strong>SYSTEM NODE</strong></div>
+      <div>Status: <span style="color:#0f0;">Active (GPU Ready)</span></div>
+    </div>
+    <div class="card">
+      <h4>TELEMETRY UPLOAD</h4>
+      <div style="text-align:center;padding:1rem;background:#111;border-radius:6px;cursor:pointer;" id="dropzone">
+        📡<br/>Ingest Thermal Image<br/>(Drop or Browse)
+        <input type="file" id="fileInput" accept="image/*" style="display:none;" />
+      </div>
+    </div>
+    <div class="card">
+      <h4>MODEL TUNING</h4>
+      <div class="toggle"><span>Object Bounding Boxes</span><input type="checkbox" id="bboxToggle" checked></div>
+      <div class="toggle"><span>Spectral Algorithm</span><input type="checkbox" id="spectralToggle"></div>
+      <div style="margin-top:0.5rem;">
+        <span class="pill active" id="pseudoBtn">Pseudo-Color</span>
+        <span class="pill" id="unetBtn">U-Net GAN</span>
+      </div>
+    </div>
+    <div class="card">
+      <h4>SATELLITE FEEDS</h4>
+      <div class="list-item"><div class="thumb" style="width:48px;height:48px;background:#333;margin-right:0.5rem;"></div>Urban Intersection ID: 01</div>
+      <div class="list-item"><div class="thumb" style="width:48px;height:48px;background:#333;margin-right:0.5rem;"></div>Highway Overpass ID: 02</div>
+    </div>
+  </aside>
+
+  <!-- Center Panel -->
+  <main style="padding:1rem;overflow:auto;">
+    <div class="header">
+      <div><span class="dot"></span>Satellite Multispectral Visualizer</div>
+      <div>
+        <button id="rawBtn" style="background:none;border:none;color:var(--accent-cyan);cursor:pointer;">◀ RAW THERMAL (IR)</button>
+        <button id="rgbBtn" style="background:none;border:none;color:var(--accent-cyan);cursor:pointer;">COLORIZED RGB ▶</button>
+      </div>
+    </div>
+    <div class="compare" id="compareArea">
+      <img src="https://via.placeholder.com/1200x600/2b2e33/ffffff?text=Thermal+IR" id="irImg" alt="Thermal IR" />
+      <img src="https://via.placeholder.com/1200x600/2b2e33/00d5ff?text=Colorized+RGB" id="rgbImg" alt="Colorized RGB" style="clip-path: inset(0 50% 0 0);" />
+      <div class="slider" id="slider"></div>
+      <div class="bbox building" style="top:120px; left:300px; width:180px; height:140px;">BUILDING 99%</div>
+      <div class="bbox vehicle" style="top:340px; left:560px; width:130px; height:80px;">VEHICLE 91%</div>
+    </div>
+  </main>
+
+  <!-- Right Sidebar -->
+  <aside class="rightbar">
+    <div class="card">
+      <h4>AI MODEL INSIGHTS</h4>
+      <div><span class="status-dot" style="background:#00d5ff;"></span> Vehicles – 0.92 AP</div>
+      <div><span class="status-dot" style="background:#ff8800;"></span> Buildings – 0.88 AP</div>
+      <div><span class="status-dot" style="background:#66ff66;"></span> Roads – 0.81 AP</div>
+    </div>
+    <div class="card">
+      <h4>FRAMEWORK ACCURACY SUMMARY</h4>
+      <ul style="list-style:none;padding-left:0;font-size:0.9rem;line-height:1.5;">
+        <li>Generator: Attention U‑Net</li>
+        <li>Discriminator: 70×70 PatchGAN</li>
+        <li>Loss: L1 + GAN</li>
+        <li>Optimizer: Adam 0.0002</li>
+        <li>Preproc: CLAHE + Unsharp</li>
+        <li>Detector: YOLOv8n</li>
+      </ul>
+    </div>
+    <div class="bottom-panel">
+      <div class="stat-card"><div>STRUCTURE (SSIM)</div><div class="stat-number">0.814 / 1.00</div></div>
+      <div class="stat-card"><div>SPECTRAL PSNR (SSNR)</div><div class="stat-number" style="color:#0f0;">24.12 dB ✓</div></div>
+      <div class="stat-card"><div>OBJECT DETECTION TIMELINE</div><div class="stat-number" style="color:#ff0;">+0%</div></div>
+      <div class="stat-card"><div>RGB DETECTIONS (ENHANCED)</div><div class="stat-number">6 Objects +200%</div><div style="background:#333;height:4px;border-radius:2px;margin-top:4px;position:relative;"><div style="background:var(--accent-cyan);width:80%;height:100%;border-radius:2px;"></div></div></div>
+    </div>
+  </aside>
+</div>
+
+<div class="footer">
+  <div>UTC: <span id="utcTime"></span> | Local: <span id="localTime"></span></div>
+  <div class="icons"><span title="Quality">⚡</span><span title="Settings">⚙️</span><span title="Help">❓</span></div>
+</div>
+
+<script>
+function updateClocks(){
+  const now=new Date();
+  document.getElementById('utcTime').textContent=now.toISOString().replace('T',' ').split('.')[0]+' UTC';
+  document.getElementById('localTime').textContent=now.toLocaleString();
+}
+setInterval(updateClocks,1000);updateClocks();
+const compare=document.getElementById('compareArea');
+const img=document.getElementById('rgbImg');
+const slider=document.getElementById('slider');
+let dragging=false;
+function setClip(x){
+  const pct=x/compare.offsetWidth*100;
+  img.style.clipPath=`inset(0 ${100-pct}% 0 0)`;
+  slider.style.left=`${pct}%`;
+}
+slider.addEventListener('mousedown',()=>{dragging=true});
+window.addEventListener('mouseup',()=>{dragging=false});
+window.addEventListener('mousemove',e=>{if(!dragging)return;const rect=compare.getBoundingClientRect();let x=e.clientX-rect.left;x=Math.max(0,Math.min(x,rect.width));setClip(x);});
+setClip(compare.offsetWidth/2);
+const drop=document.getElementById('dropzone');
+const fileInput=document.getElementById('fileInput');
+drop.addEventListener('click',()=>fileInput.click());
+fileInput.addEventListener('change',e=>{const file=e.target.files[0];if(file){const url=URL.createObjectURL(file);document.getElementById('irImg').src=url;}});
+</script>
+</body>
+</html>

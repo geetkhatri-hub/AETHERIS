@@ -1,0 +1,18 @@
+# Python
+backend/venv/
+backend/__pycache__/
+backend/models/__pycache__/
+backend/utils/__pycache__/
+*.pyc
+
+# Node
+frontend/node_modules/
+frontend/dist/
+
+# Model weights (too large for GitHub, deploy separately)
+backend/models/*.pth
+backend/yolov8n.pt
+
+# OS files
+.DS_Store
+Thumbs.db
