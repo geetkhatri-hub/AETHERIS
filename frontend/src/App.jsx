@@ -126,7 +126,8 @@ function App() {
   const [isOnline, setIsOnline] = useState(false);
   const [currentTime, setCurrentTime] = useState("");
 
- const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+const API_URL = import.meta.env.VITE_API_URL || "https://geet-2406-backend.hf.space";
+console.log("API_URL resolved to:", API_URL, "| raw env value:", import.meta.env.VITE_API_URL);
 
   // Helper function for selection
   const handleSampleSelect = async (sample) => {
